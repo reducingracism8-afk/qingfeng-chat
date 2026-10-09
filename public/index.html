@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>清风聊天 V1</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif;background:#eef2f7;color:#1f2937}
+button,input{font:inherit}.hidden{display:none!important}
+.auth{min-height:100vh;display:grid;place-items:center;padding:20px}.card{width:min(420px,100%);background:white;border-radius:22px;padding:32px;box-shadow:0 15px 45px #0001}.logo{text-align:center;font-size:32px;font-weight:800;margin-bottom:8px}.sub{text-align:center;color:#94a3b8;margin-bottom:25px}
+.tabs{display:flex;background:#f1f5f9;border-radius:12px;padding:4px;margin-bottom:20px}.tabs button{flex:1;border:0;background:transparent;padding:10px;border-radius:9px;cursor:pointer}.tabs .on{background:white;box-shadow:0 2px 8px #0001}
+.field{margin:12px 0}.field label{display:block;font-size:13px;color:#64748b;margin-bottom:6px}.field input{width:100%;padding:12px 13px;border:1px solid #dbe2ea;border-radius:11px;outline:0}.field input:focus{border-color:#7c9cff}
+.primary{width:100%;border:0;border-radius:11px;padding:12px;background:#4f6ef7;color:white;cursor:pointer;margin-top:10px}.err{color:#ef4444;font-size:13px;min-height:20px;margin-top:8px}
+.app{height:100vh;display:flex}.side{width:310px;background:#fff;border-right:1px solid #e5e7eb;display:flex;flex-direction:column}.me{padding:18px;border-bottom:1px solid #eee;display:flex;align-items:center;gap:12px}.avatar{width:42px;height:42px;border-radius:50%;background:#dbeafe;display:grid;place-items:center;font-weight:700;color:#2563eb;flex:none}.me .name{font-weight:700}.me small{color:#94a3b8}.logout{margin-left:auto;border:0;background:#f1f5f9;border-radius:8px;padding:7px;cursor:pointer}
+.search{padding:12px}.search input{width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:10px}.list{overflow:auto;flex:1}.person{padding:12px 16px;display:flex;gap:11px;align-items:center;cursor:pointer}.person:hover,.person.active{background:#f3f6ff}.person .pname{font-weight:650}.person small{display:block;color:#94a3b8;margin-top:2px}.add{padding:12px 16px;border-top:1px solid #eee}.add button{width:100%;border:0;padding:10px;border-radius:10px;background:#eef2ff;color:#4f46e5;cursor:pointer}
+.main{flex:1;display:flex;flex-direction:column;min-width:0}.empty{height:100%;display:grid;place-items:center;color:#94a3b8}.chathead{height:70px;background:white;border-bottom:1px solid #eee;display:flex;align-items:center;padding:0 22px;font-weight:700}.messages{flex:1;padding:22px;overflow:auto}.bubble-row{display:flex;margin:9px 0}.bubble-row.mine{justify-content:flex-end}.bubble{max-width:min(70%,520px);padding:10px 13px;border-radius:15px;background:white;box-shadow:0 1px 2px #0000000d;word-break:break-word}.mine .bubble{background:#4f6ef7;color:white}.bubble img{max-width:300px;max-height:300px;border-radius:10px;display:block}.composer{background:white;border-top:1px solid #eee;padding:12px;display:flex;gap:9px}.composer input{flex:1;padding:11px;border:1px solid #ddd;border-radius:11px}.composer button{border:0;border-radius:10px;padding:0 14px;cursor:pointer}.send{background:#4f6ef7;color:#fff}.photo{background:#f1f5f9}.modal{position:fixed;inset:0;background:#0005;display:grid;place-items:center;padding:20px}.modalbox{background:#fff;width:min(430px,100%);border-radius:18px;padding:22px}.modalbox h3{margin-top:0}.result{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #eee}.result button{margin-left:auto;border:0;background:#4f6ef7;color:#fff;border-radius:8px;padding:7px 10px}.requests{margin-top:18px}.request{display:flex;align-items:center;gap:8px;margin:8px 0}.request button{margin-left:auto}
+@media(max-width:700px){.side{width:90px}.side .me .name,.side .me small,.side .search,.side .add span,.person>div:not(.avatar){display:none}.me{justify-content:center;padding:12px}.person{justify-content:center;padding:12px}.add{padding:10px}.chathead{padding:0 14px}}
+</style>
+</head>
+<body>
+<div id="auth" class="auth">
+  <div class="card">
+    <div class="logo">清风聊天</div><div class="sub">Chat V1 · 简单、轻量、可本地运行</div>
+    <div class="tabs"><button id="loginTab" class="on">登录</button><button id="regTab">注册</button></div>
+    <div id="nicknameBox" class="field hidden"><label>昵称</label><input id="nickname" placeholder="例如：周周"></div>
+    <div class="field"><label>账号</label><input id="username" placeholder="3-20位字母/数字/下划线"></div>
+    <div class="field"><label>密码</label><input id="password" type="password" placeholder="至少6位"></div>
+    <div id="authErr" class="err"></div><button id="authBtn" class="primary">登录</button>
+  </div>
+</div>
+
+<div id="app" class="app hidden">
+  <aside class="side">
+    <div class="me"><div id="myAvatar" class="avatar">我</div><div><div id="myName" class="name"></div><small id="myUser"></small></div><button class="logout" onclick="logout()">退出</button></div>
+    <div class="search"><input id="searchInput" placeholder="搜索好友账号/昵称"></div>
+    <div id="people" class="list"></div>
+    <div class="add"><button onclick="openFriends()"><span>＋ 添加好友</span>＋</button></div>
+  </aside>
+  <main class="main">
+    <div id="empty" class="empty">选择一个好友开始聊天</div>
+    <div id="chat" class="hidden" style="height:100%;display:flex;flex-direction:column">
+      <div id="chatHead" class="chathead"></div>
+      <div id="messages" class="messages"></div>
+      <div class="composer">
+        <input id="messageInput" placeholder="输入消息，按 Enter 发送">
+        <input id="imageInput" type="file" accept="image/png,image/jpeg,image/gif,image/webp" hidden>
+        <button class="photo" onclick="document.getElementById('imageInput').click()">📷</button>
+        <button class="send" onclick="sendText()">发送</button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div id="friendModal" class="modal hidden">
+ <div class="modalbox">
+   <h3>添加好友</h3>
+   <input id="friendSearch" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:10px" placeholder="输入账号或昵称">
+   <div id="searchResults"></div>
+   <div class="requests"><b>好友申请</b><div id="requestList"></div></div>
+   <button onclick="closeFriends()" style="margin-top:15px;width:100%;padding:10px;border:0;border-radius:10px">关闭</button>
+ </div>
+</div>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+let token=localStorage.getItem("chat_token"), me=null, friends=[], current=null, socket=null;
+const $=id=>document.getElementById(id);
+function api(url,opt={}){opt.headers={...(opt.headers||{}),Authorization:"Bearer "+token};return fetch(url,opt).then(async r=>{const d=await r.json();if(!r.ok)throw Error(d.error||"请求失败");return d})}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function avatar(u){return (u.nickname||u.username||"?").slice(0,1).toUpperCase()}
+function showAuth(reg=false){$("auth").classList.remove("hidden");$("app").classList.add("hidden");$("nicknameBox").classList.toggle("hidden",!reg);$("loginTab").classList.toggle("on",!reg);$("regTab").classList.toggle("on",reg);$("authBtn").textContent=reg?"注册":"登录";$("authErr").textContent=""}
+$("loginTab").onclick=()=>showAuth(false);$("regTab").onclick=()=>showAuth(true);
+$("authBtn").onclick=async()=>{try{const reg=!$("nicknameBox").classList.contains("hidden");const body={username:$("username").value.trim(),password:$("password").value};if(reg)body.nickname=$("nickname").value.trim();const d=await fetch("/api/"+(reg?"register":"login"),{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)}).then(async r=>{let x=await r.json();if(!r.ok)throw Error(x.error);return x});token=d.token;localStorage.setItem("chat_token",token);me=d.user;startApp()}catch(e){$("authErr").textContent=e.message}};
+$("password").addEventListener("keydown",e=>{if(e.key==="Enter")$("authBtn").click()});
+async function startApp(){try{if(!me)me=(await api("/api/me")).user;$("auth").classList.add("hidden");$("app").classList.remove("hidden");$("myName").textContent=me.nickname;$("myUser").textContent="@"+me.username;$("myAvatar").textContent=avatar(me);await loadFriends();await loadRequests();socket=io({auth:{token}});socket.on("message:new",m=>{if(current && ((m.sender===current.id&&m.receiver===me.id)||(m.sender===me.id&&m.receiver===current.id))) renderMessage(m);});socket.on("friend:accepted",()=>loadFriends());socket.on("friend:request",()=>loadRequests())}catch(e){logout()}}
+async function loadFriends(){friends=await api("/api/friends");renderPeople(friends)}
+function renderPeople(list){$("people").innerHTML=list.map(u=>`<div class="person ${current&&current.id===u.id?"active":""}" onclick='openChat(${u.id})'><div class="avatar">${esc(avatar(u))}</div><div><div class="pname">${esc(u.nickname)}</div><small>@${esc(u.username)}</small></div></div>`).join("")}
+$("searchInput").oninput=()=>{const q=$("searchInput").value.toLowerCase();renderPeople(friends.filter(u=>(u.nickname+" "+u.username).toLowerCase().includes(q)))}
+async function openChat(id){current=friends.find(x=>x.id===id);if(!current)return;renderPeople(friends);$("empty").classList.add("hidden");$("chat").classList.remove("hidden");$("chatHead").textContent=current.nickname+"  @"+current.username;$("messages").innerHTML="";const ms=await api("/api/messages/"+id);ms.forEach(renderMessage);scrollBottom()}
+function renderMessage(m){const mine=m.sender===me.id;const row=document.createElement("div");row.className="bubble-row "+(mine?"mine":"");const bubble=document.createElement("div");bubble.className="bubble";if(m.type==="image"){bubble.innerHTML=`<img src="${esc(m.content)}" onclick="window.open(this.src)">`}else bubble.textContent=m.content;row.appendChild(bubble);$("messages").appendChild(row);scrollBottom()}
+function scrollBottom(){$("messages").scrollTop=$("messages").scrollHeight}
+async function sendText(){if(!current)return;const input=$("messageInput"),text=input.value.trim();if(!text)return;input.value="";try{await api("/api/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({receiverId:current.id,type:"text",content:text})})}catch(e){alert(e.message)}}
+$("messageInput").onkeydown=e=>{if(e.key==="Enter")sendText()};
+$("imageInput").onchange=async()=>{const file=$("imageInput").files[0];if(!file||!current)return;if(file.size>8*1024*1024)return alert("图片不能超过 8MB");const fd=new FormData();fd.append("image",file);try{const u=await fetch("/api/upload",{method:"POST",headers:{Authorization:"Bearer "+token},body:fd}).then(async r=>{const d=await r.json();if(!r.ok)throw Error(d.error);return d});await api("/api/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({receiverId:current.id,type:"image",content:u.url})})}catch(e){alert(e.message)}$("imageInput").value=""};
+function openFriends(){$("friendModal").classList.remove("hidden");$("friendSearch").value="";$("searchResults").innerHTML="";loadRequests()}
+function closeFriends(){$("friendModal").classList.add("hidden")}
+$("friendSearch").oninput=async()=>{const q=$("friendSearch").value.trim();if(!q){$("searchResults").innerHTML="";return}try{const users=await api("/api/users/search?q="+encodeURIComponent(q));$("searchResults").innerHTML=users.map(u=>`<div class="result"><div class="avatar">${esc(avatar(u))}</div><div>${esc(u.nickname)}<small style="display:block;color:#94a3b8">@${esc(u.username)}</small></div><button onclick="addFriend(${u.id})">添加</button></div>`).join("")}catch(e){}};
+async function addFriend(id){try{await api("/api/friends/request",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({friendId:id})});alert("好友申请已发送")}catch(e){alert(e.message)}}
+async function loadRequests(){try{const rs=await api("/api/friend-requests");$("requestList").innerHTML=rs.length?rs.map(r=>`<div class="request"><span>${esc(r.user.nickname)} (@${esc(r.user.username)})</span><button onclick="acceptRequest(${r.requestId})">接受</button></div>`).join(""):"<small style='color:#94a3b8'>暂无申请</small>"}catch(e){}}
+async function acceptRequest(id){try{await api("/api/friends/accept",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({requestId:id})});await loadFriends();await loadRequests()}catch(e){alert(e.message)}}
+function logout(){localStorage.removeItem("chat_token");token=null;me=null;friends=[];current=null;if(socket)socket.disconnect();showAuth(false)}
+if(token)startApp();else showAuth(false);
+</script>
+</body>
+</html>
